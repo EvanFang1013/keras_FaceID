@@ -1,0 +1,67 @@
+from sklearn.metrics import auc
+
+def roc_table(value, true, cut):
+    n=len(value)
+    TP_=[]
+    FP_=[]
+    TN_=[]
+    FN_=[]
+    Acc_=[]
+    Sen_=[]
+    Spe_=[]
+    
+    for c in cut:
+        value_cut=[]
+        
+        TP=FP=TN=FN=0
+        for i in range(n):
+            if value[i]>c:
+                value_cut.append(1)
+            else:
+                value_cut.append(0)
+            
+            if value_cut[i]==1 and true[i]==1:TP+=1
+            elif value_cut[i]==1 and true[i]==0:FP+=1
+            elif value_cut[i]==0 and true[i]==1:FN+=1
+            elif value_cut[i]==0 and true[i]==0:TN+=1
+            else :np.nan
+        
+        Acc=(TP+TN)/n
+        Sen=TP/(TP+FN)
+        Spe=TN/(FP+TN)
+        
+        TP_.append(TP)
+        FP_.append(FP)
+        FN_.append(FN)
+        TN_.append(TN)
+        Acc_.append(Acc)
+        Sen_.append(Sen)
+        Spe_.append(Spe)
+    
+    df=pd.DataFrame({'Cut point':cut, 'TP':TP_, 'FP':FP_, 'FN':FN_, 'TN':TN_, 
+                     'accuracy':Acc_, 'sensitivity':Sen_, 'specificity':Spe_, 'specificity+sensitivity':np.sum([Sen_, Spe_], axis=0)})
+    return(df)
+def choose_roc_curve(value, true, cut):
+    df=roc_table(value, true, cut)
+    
+    value1=-np.array(value)
+    cut1=-np.array(cut)
+    df1=roc_table(value1, true, cut1)
+    
+    m=auc(1-df['specificity'],df['sensitivity'])
+    m1=auc(1-df1['specificity'],df1['sensitivity'])
+    
+    if m>m1:
+        y=df['sensitivity']
+        x=1-df['specificity']
+        print('切點以上為+，切點以下為-，曲線下面積=', m)
+    else:
+        y=df1['sensitivity']
+        x=1-df1['specificity']
+        print('切點以上為-，切點以下為+，曲線下面積=', m1)
+    
+    plt.ylabel('sensitivity')
+    plt.xlabel('1-specificity')
+    plt.title('Empirical ROC curve')
+    plt.plot(x, y, 'b')
+    plt.show()
